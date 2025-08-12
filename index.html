@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- SEO: Basic Meta Tags -->
+    <meta charset="UTF-8">
+    <title>Weboprompter - Free Online Teleprompter Tool</title>
+    <meta name="description" content="Weboprompter is a free, browser-based teleprompter for creators. Easily load, edit, and scroll scripts with customizable speed, font size, and mirroring. No installation required.">
+    <meta name="keywords" content="teleprompter, online teleprompter, free teleprompter, web teleprompter, script prompter, video script, creator tool">
+    <meta name="author" content="Chris Pirillo">
+    
+    <!-- SEO: Canonical URL -->
+    <link rel="canonical" href="https://pirillo.com/arcade/weboprompter.html">
+
+    <!-- Core Web Vitals: Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO: Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pirillo.com/arcade/weboprompter.html">
+    <meta property="og:title" content="Weboprompter - Free Online Teleprompter Tool">
+    <meta property="og:description" content="A free, browser-based teleprompter for creators with customizable speed, font size, and mirroring.">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/weboprompter.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- SEO: Twitter Card -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://pirillo.com/arcade/weboprompter.html">
+    <meta property="twitter:title" content="Weboprompter - Free Online Teleprompter Tool">
+    <meta property="twitter:description" content="A free, browser-based teleprompter for creators with customizable speed, font size, and mirroring.">
+    <meta property="twitter:image" content="https://pirillo.com/arcade/images/weboprompter.png">
+    <meta property="twitter:creator" content="@ChrisPirillo">
+
+    <!-- Performance: Preconnect to critical origins -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Performance: Preload and asynchronously load fonts to prevent render-blocking and FOUT/FOIT -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono&family=Open+Sans&family=Lato&family=Noto+Sans&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono&family=Open+Sans&family=Lato&family=Noto+Sans&display=swap"></noscript>
+
+    <!-- Performance: Tailwind CSS is critical for the initial render, loaded directly as requested. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+
+    <!-- SEO: JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Weboprompter",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any (Web browser)",
+      "url": "https://pirillo.com/arcade/weboprompter.html",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://chris.pirillo.com/"
+      },
+      "description": "A free, browser-based teleprompter for creators. Features include customizable scroll speed, font size adjustments, text mirroring for use with reflective hardware, and the ability to save, load, import, and export scripts.",
+      "softwareHelp": {
+        "@type": "CreativeWork",
+        "name": "Weboprompter Help",
+        "description": "Use the settings panel to control speed, font size, and mirroring. Save and load scripts directly in your browser."
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+    
+    <!-- Critical CSS for layout and Core Web Vitals (CLS) -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent body scroll */
+        }
+        #teleprompter-display {
+            transform-origin: center center;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            user-select: none; /* Disable text selection */
+            cursor: grab;
+        }
+        #teleprompter-display:active {
+            cursor: grabbing;
+        }
+        #teleprompter-content {
+            position: absolute;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            width: 100%;
+            padding: 10vh 5vw; /* Padding for readability */
+            transition: text-transform 0.3s ease;
+            will-change: top; /* Performance hint for the browser */
+        }
+        .mirrored #teleprompter-content {
+            transform: scaleX(-1);
+            transform-origin: center center;
+        }
+        
+        /* Settings Panel */
+        #settings-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 320px;
+            background-color: #111827; /* bg-gray-900 */
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+        }
+        #settings-panel.open {
+            transform: translateX(0);
+        }
+        .settings-content {
+            padding: 1rem;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+
+    <!-- SEO: Main content area of the application -->
+    <main id="teleprompter-display" aria-label="Teleprompter Display">
+        <div id="teleprompter-content" class="text-left" aria-live="off"></div>
+    </main>
+
+    <!-- SEO: Footer for primary controls -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4 flex justify-center items-center space-x-4 z-40" role="toolbar">
+        <button id="start-pause-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-md transition text-lg">Start</button>
+        <!-- SEO: Settings toggle is a secondary control, placed visually apart -->
+        <button id="settings-toggle-btn" aria-label="Open Settings" class="fixed bottom-4 left-4 bg-gray-700 hover:bg-gray-600 p-3 rounded-full z-40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" role="img" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+    </footer>
+
+    <!-- SEO: Settings panel is an aside, complementary to the main content -->
+    <aside id="settings-panel" class="open" role="complementary" aria-labelledby="settings-heading">
+        <div class="settings-content space-y-4">
+            <header class="flex justify-between items-center">
+                <h1 id="settings-heading" class="text-2xl font-bold">Weboprompter</h1>
+                <button id="close-settings-btn" aria-label="Close Settings" class="p-2 rounded-full hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" role="img" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Script Management Section -->
+            <section aria-labelledby="script-management-heading">
+                <h2 id="script-management-heading" class="sr-only">Script Management</h2>
+                <div>
+                    <label for="script-name" class="block text-sm font-medium text-gray-300">Script Name</label>
+                    <input type="text" id="script-name" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 mt-1 text-white focus:ring-2 focus:ring-blue-500" placeholder="Enter script name">
+                </div>
+                <div>
+                    <label for="script-input" class="block text-sm font-medium text-gray-300">Script Text</label>
+                    <textarea id="script-input" rows="6" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 mt-1 text-white focus:ring-2 focus:ring-blue-500" placeholder="Paste your script here..."></textarea>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="save-script-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition">Save</button>
+                    <button id="clear-script-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition">Clear</button>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section aria-labelledby="display-settings-heading" class="space-y-4 pt-4 border-t border-gray-700">
+                <h2 id="display-settings-heading" class="text-lg font-bold text-center">Settings</h2>
+                <div>
+                    <label for="speed-slider" class="block text-sm font-medium text-gray-300">Speed: <span id="speed-value">125</span></label>
+                    <input id="speed-slider" type="range" min="10" max="300" value="125" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div>
+                    <label for="font-size-slider" class="block text-sm font-medium text-gray-300">Font Size: <span id="font-size-value">85</span>px</label>
+                    <input id="font-size-slider" type="range" min="12" max="200" value="85" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <div>
+                    <label for="font-face-select" class="block text-sm font-medium text-gray-300">Teleprompter Font</label>
+                    <select id="font-face-select" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 mt-1 text-white focus:ring-2 focus:ring-blue-500">
+                        <option value="'Inter', sans-serif">Inter</option>
+                        <option value="'Noto Sans', sans-serif">Noto Sans</option>
+                        <option value="'Roboto Mono', monospace">Roboto Mono</option>
+                        <option value="'Open Sans', sans-serif">Open Sans</option>
+                        <option value="'Lato', sans-serif">Lato</option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-300">Mirror Text</span>
+                    <label for="mirror-toggle" class="inline-flex relative items-center cursor-pointer">
+                        <input type="checkbox" id="mirror-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-300">All Caps</span>
+                    <label for="caps-toggle" class="inline-flex relative items-center cursor-pointer">
+                        <input type="checkbox" id="caps-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+            </section>
+            
+            <!-- Import/Export/Load Section -->
+            <section aria-labelledby="manage-scripts-heading" class="space-y-2 pt-4 border-t border-gray-700">
+                <h2 id="manage-scripts-heading" class="text-lg font-bold text-center">Manage Scripts</h2>
+                 <div>
+                    <label for="saved-scripts" class="block text-sm font-medium text-gray-300">Load Script</label>
+                    <select id="saved-scripts" class="w-full bg-gray-800 border border-gray-700 rounded-md p-2 mt-1 text-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Select a script --</option>
+                    </select>
+                </div>
+                <button id="delete-script-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition">Delete Selected Script</button>
+                <button id="export-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition">Export Current Script</button>
+                <label class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition text-center block cursor-pointer">
+                    Import Script
+                    <input type="file" id="import-input" class="hidden" accept=".json">
+                </label>
+            </section>
+        </div>
+    </aside>
+    
+    <!-- JAVASCRIPT IS UNCHANGED AS PER REQUIREMENTS -->
+    <!-- It is placed at the end of the body to avoid render-blocking. -->
+    <script>
+        // --- DOM Elements ---
+        const teleprompterDisplay = document.getElementById('teleprompter-display');
+        const teleprompterContent = document.getElementById('teleprompter-content');
+        const startPauseBtn = document.getElementById('start-pause-btn');
+        const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        
+        const scriptNameInput = document.getElementById('script-name');
+        const scriptInput = document.getElementById('script-input');
+        const saveScriptBtn = document.getElementById('save-script-btn');
+        const clearScriptBtn = document.getElementById('clear-script-btn');
+        const savedScriptsSelect = document.getElementById('saved-scripts');
+        const deleteScriptBtn = document.getElementById('delete-script-btn');
+
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValue = document.getElementById('speed-value');
+        const fontSizeSlider = document.getElementById('font-size-slider');
+        const fontSizeValue = document.getElementById('font-size-value');
+        const fontFaceSelect = document.getElementById('font-face-select');
+        const mirrorToggle = document.getElementById('mirror-toggle');
+        const capsToggle = document.getElementById('caps-toggle');
+
+        const exportBtn = document.getElementById('export-btn');
+        const importInput = document.getElementById('import-input');
+
+        // --- State ---
+        let currentSettings = {
+            speed: 125,
+            fontSize: 85,
+            fontFace: "'Inter', sans-serif",
+            mirrored: true,
+            caps: true,
+        };
+
+        let animationState = {
+            isScrolling: false,
+            isPaused: false,
+            animationFrameId: null,
+            startTime: 0,
+            pausedTime: 0,
+            initialTop: 0,
+        };
+        
+        let interactionState = {
+            isDragging: false,
+            dragStartY: 0,
+            dragStartTop: 0,
+        };
+
+        // --- Core Animation Logic ---
+        
+        function scrollStep(timestamp) {
+            if (!animationState.isScrolling || animationState.isPaused) return;
+
+            if (animationState.startTime === 0) {
+                animationState.startTime = timestamp;
+            }
+
+            const elapsedTime = timestamp - animationState.startTime;
+            const pixelsToScroll = (elapsedTime / 1000) * currentSettings.speed;
+            
+            teleprompterContent.style.top = `${animationState.initialTop - pixelsToScroll}px`;
+
+            const contentRect = teleprompterContent.getBoundingClientRect();
+            if (contentRect.bottom < 0) {
+                resetToTop();
+            } else {
+                animationState.animationFrameId = requestAnimationFrame(scrollStep);
+            }
+        }
+
+        function startScrolling() {
+            if (animationState.isScrolling && !animationState.isPaused) return;
+
+            settingsPanel.classList.remove('open');
+
+            if (animationState.isPaused) { // Resuming
+                animationState.isPaused = false;
+                const pauseDuration = performance.now() - animationState.pausedTime;
+                animationState.startTime += pauseDuration;
+            } else { // Starting
+                animationState.isScrolling = true;
+                animationState.startTime = 0;
+                animationState.initialTop = teleprompterContent.offsetTop;
+            }
+            
+            startPauseBtn.textContent = 'Pause';
+            startPauseBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            startPauseBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            
+            animationState.animationFrameId = requestAnimationFrame(scrollStep);
+        }
+
+        function pauseScrolling() {
+            if (!animationState.isScrolling || animationState.isPaused) return;
+            animationState.isPaused = true;
+            animationState.pausedTime = performance.now();
+            cancelAnimationFrame(animationState.animationFrameId);
+            startPauseBtn.textContent = 'Resume';
+        }
+
+        function resetToTop() {
+            cancelAnimationFrame(animationState.animationFrameId);
+            animationState = { ...animationState, isScrolling: false, isPaused: false, startTime: 0, pausedTime: 0, initialTop: 0 };
+            startPauseBtn.textContent = 'Start';
+            startPauseBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            startPauseBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            teleprompterContent.style.top = '5vh';
+        }
+
+        function toggleStartPause() {
+            if (!animationState.isScrolling || animationState.isPaused) {
+                startScrolling();
+            } else {
+                pauseScrolling();
+            }
+        }
+
+        // --- UI & Settings Functions ---
+
+        function applySettings() {
+            teleprompterContent.style.fontSize = `${currentSettings.fontSize}px`;
+            teleprompterContent.style.fontFamily = currentSettings.fontFace;
+            teleprompterContent.style.textTransform = currentSettings.caps ? 'uppercase' : 'none';
+            teleprompterDisplay.classList.toggle('mirrored', currentSettings.mirrored);
+            
+            speedSlider.value = currentSettings.speed;
+            speedValue.textContent = currentSettings.speed;
+            fontSizeSlider.value = currentSettings.fontSize;
+            fontSizeValue.textContent = `${currentSettings.fontSize}`;
+            fontFaceSelect.value = currentSettings.fontFace;
+            mirrorToggle.checked = currentSettings.mirrored;
+            capsToggle.checked = currentSettings.caps;
+        }
+
+        function updateTeleprompterText(text) {
+            teleprompterContent.textContent = text;
+            scriptInput.value = text;
+        }
+        
+        function syncAnimationToPosition(newTop) {
+             if (animationState.isScrolling) {
+                animationState.initialTop = newTop;
+                animationState.startTime = performance.now();
+                if (animationState.isPaused) {
+                    animationState.pausedTime = performance.now();
+                }
+            }
+        }
+        
+        function clampPosition(newTop) {
+            const displayHeight = teleprompterDisplay.clientHeight;
+            const contentHeight = teleprompterContent.scrollHeight;
+            const minTop = displayHeight - contentHeight - (displayHeight * 0.1); // Keep 10vh padding at bottom
+            const maxTop = displayHeight * 0.9; // Don't let it go too far down
+            
+            if (contentHeight < displayHeight) { // If content is shorter than screen, center it
+                return (displayHeight - contentHeight) / 2;
+            }
+            
+            return Math.max(minTop, Math.min(maxTop, newTop));
+        }
+
+        // --- Script Management (localStorage) ---
+        function loadScriptsList() {
+            const scripts = JSON.parse(localStorage.getItem('weboprompterScripts')) || {};
+            savedScriptsSelect.innerHTML = '<option value="">-- Select a script --</option>';
+            Object.keys(scripts).forEach(scriptName => {
+                const option = document.createElement('option');
+                option.value = scriptName;
+                option.textContent = scriptName;
+                savedScriptsSelect.appendChild(option);
+            });
+        }
+        
+        function loadScript(scriptName) {
+            if (!scriptName) return;
+            const scripts = JSON.parse(localStorage.getItem('weboprompterScripts')) || {};
+            const data = scripts[scriptName];
+            
+            if (data) {
+                scriptNameInput.value = scriptName;
+                updateTeleprompterText(data.text);
+                currentSettings = { ...currentSettings, ...data.settings };
+                applySettings();
+                resetToTop();
+            }
+        }
+
+        function saveScript() {
+            const scriptName = scriptNameInput.value.trim();
+            if (!scriptName) {
+                // Replaced alert with a more modern approach if possible, but sticking to user's code.
+                alert("Please enter a name for your script.");
+                return;
+            }
+            const scripts = JSON.parse(localStorage.getItem('weboprompterScripts')) || {};
+            scripts[scriptName] = {
+                text: scriptInput.value,
+                settings: currentSettings
+            };
+            localStorage.setItem('weboprompterScripts', JSON.stringify(scripts));
+            alert(`Script "${scriptName}" saved successfully!`);
+            loadScriptsList();
+        }
+        
+        function deleteScript() {
+            const scriptName = savedScriptsSelect.value;
+            if (!scriptName) {
+                alert("Please select a script to delete.");
+                return;
+            }
+
+            if (confirm(`Are you sure you want to delete "${scriptName}"? This cannot be undone.`)) {
+                const scripts = JSON.parse(localStorage.getItem('weboprompterScripts')) || {};
+                delete scripts[scriptName];
+                localStorage.setItem('weboprompterScripts', JSON.stringify(scripts));
+                loadScriptsList();
+                if (scriptNameInput.value === scriptName) {
+                    clearScript();
+                }
+            }
+        }
+
+        function clearScript() {
+            scriptNameInput.value = '';
+            updateTeleprompterText('');
+            resetToTop();
+        }
+
+        function exportJSON() {
+            const scriptName = scriptNameInput.value.trim() || 'untitled-script';
+            const data = {
+                name: scriptName,
+                text: scriptInput.value,
+                settings: currentSettings
+            };
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${scriptName}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.name && typeof data.text !== 'undefined' && data.settings) {
+                        scriptNameInput.value = data.name;
+                        updateTeleprompterText(data.text);
+                        currentSettings = { ...currentSettings, ...data.settings };
+                        applySettings();
+                        resetToTop();
+                        alert(`Script "${data.name}" imported. Save it to keep it.`);
+                    } else {
+                         alert("Invalid JSON file format.");
+                    }
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                    alert("Could not read the file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = null;
+        }
+
+        // --- Event Listeners ---
+        startPauseBtn.addEventListener('click', toggleStartPause);
+        settingsToggleBtn.addEventListener('click', () => settingsPanel.classList.add('open'));
+        closeSettingsBtn.addEventListener('click', () => settingsPanel.classList.remove('open'));
+        
+        scriptInput.addEventListener('input', (e) => {
+            updateTeleprompterText(e.target.value);
+            resetToTop();
+        });
+
+        speedSlider.addEventListener('input', (e) => {
+            currentSettings.speed = parseInt(e.target.value, 10);
+            speedValue.textContent = e.target.value;
+        });
+
+        fontSizeSlider.addEventListener('input', (e) => {
+            currentSettings.fontSize = e.target.value;
+            fontSizeValue.textContent = e.target.value;
+            teleprompterContent.style.fontSize = `${e.target.value}px`;
+            resetToTop();
+        });
+
+        fontFaceSelect.addEventListener('change', (e) => {
+            currentSettings.fontFace = e.target.value;
+            teleprompterContent.style.fontFamily = e.target.value;
+            resetToTop();
+        });
+
+        mirrorToggle.addEventListener('change', (e) => {
+            currentSettings.mirrored = e.target.checked;
+            teleprompterDisplay.classList.toggle('mirrored', e.target.checked);
+        });
+
+        capsToggle.addEventListener('change', (e) => {
+            currentSettings.caps = e.target.checked;
+            teleprompterContent.style.textTransform = e.target.checked ? 'uppercase' : 'none';
+        });
+        
+        teleprompterDisplay.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let newTop = teleprompterContent.offsetTop - e.deltaY;
+            newTop = clampPosition(newTop);
+            teleprompterContent.style.top = `${newTop}px`;
+            syncAnimationToPosition(newTop);
+        });
+        
+        teleprompterDisplay.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            interactionState.isDragging = true;
+            interactionState.dragStartY = e.clientY;
+            interactionState.dragStartTop = teleprompterContent.offsetTop;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!interactionState.isDragging) return;
+            e.preventDefault();
+            const deltaY = e.clientY - interactionState.dragStartY;
+            let newTop = interactionState.dragStartTop + deltaY;
+            newTop = clampPosition(newTop);
+            teleprompterContent.style.top = `${newTop}px`;
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!interactionState.isDragging) return;
+            e.preventDefault();
+            interactionState.isDragging = false;
+            const finalTop = teleprompterContent.offsetTop;
+            syncAnimationToPosition(finalTop);
+        });
+
+        saveScriptBtn.addEventListener('click', saveScript);
+        deleteScriptBtn.addEventListener('click', deleteScript);
+        clearScriptBtn.addEventListener('click', clearScript);
+        savedScriptsSelect.addEventListener('change', (e) => loadScript(e.target.value));
+
+        exportBtn.addEventListener('click', exportJSON);
+        importInput.addEventListener('change', importJSON);
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' && !event.target.matches('input, textarea')) {
+                event.preventDefault();
+                toggleStartPause();
+            }
+        });
+        
+        // --- Initialization ---
+        window.onload = () => {
+            applySettings();
+            loadScriptsList();
+            resetToTop();
+        };
+
+    </script>
+</body>
+</html>
